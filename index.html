@@ -41,16 +41,61 @@
 
   <main id="app">
 
-    <!-- ─── ИНТРО ─── -->
-    <section class="view view--intro" id="view-intro">
+    <!-- ─── НАСТРОЙКА ИГРОКОВ ─── -->
+    <section class="view view--setup" id="view-setup">
       <header class="hero">
-        <span class="hero__badge">игра для двоих</span>
+        <span class="hero__badge">привет! поехали</span>
+        <h1 class="title">
+          <span class="title__big">Правда</span>
+          <span class="title__or">или</span>
+          <span class="title__big title__big--alt">Действие</span>
+        </h1>
+      </header>
+
+      <div class="setup">
+        <div class="setup__block">
+          <h2 class="setup__h">
+            <span class="setup__step">1</span>
+            <span>Сколько вас?</span>
+          </h2>
+          <div class="pc" id="pc-list" role="radiogroup" aria-label="Количество игроков">
+            <button class="pc__pill is-active" data-count="2" role="radio" aria-checked="true">2</button>
+            <button class="pc__pill" data-count="3" role="radio" aria-checked="false">3</button>
+            <button class="pc__pill" data-count="4" role="radio" aria-checked="false">4</button>
+            <button class="pc__pill" data-count="5" role="radio" aria-checked="false">5</button>
+            <button class="pc__pill" data-count="6" role="radio" aria-checked="false">6</button>
+          </div>
+        </div>
+
+        <div class="setup__block">
+          <h2 class="setup__h">
+            <span class="setup__step">2</span>
+            <span>Как вас зовут?</span>
+          </h2>
+          <div class="names" id="names-list"></div>
+          <p class="setup__hint">Можно оставить пустым — будем звать «Игрок 1», «Игрок 2»…</p>
+        </div>
+
+        <button class="btn btn--primary btn--big" id="btn-continue">
+          <span>Выбрать уровень</span>
+          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+            <path d="M5 12 L19 12 M13 6 L19 12 L13 18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+    </section>
+
+    <!-- ─── ИНТРО (выбор уровня) ─── -->
+    <section class="view view--intro" id="view-intro" hidden>
+      <header class="hero">
+        <span class="hero__badge hero__badge--players" id="players-display">— · —</span>
         <h1 class="title">
           <span class="title__big">Правда</span>
           <span class="title__or">или</span>
           <span class="title__big title__big--alt">Действие</span>
         </h1>
         <p class="tagline">Выбери уровень — и вытяни карту&nbsp;<span class="tagline__dot">·</span> карта за картой</p>
+        <button class="text-btn" id="btn-back-to-setup">← поменять игроков</button>
       </header>
 
       <div class="levels">
@@ -126,6 +171,15 @@
         <button class="mode" data-mode="mixed" role="tab" aria-selected="false">Микс</button>
         <button class="mode" data-mode="dare" role="tab" aria-selected="false">Действие</button>
       </nav>
+
+      <div class="player-turn" id="player-turn">
+        <span class="player-turn__dot"></span>
+        <span class="player-turn__label">ходит:</span>
+        <span class="player-turn__name" id="current-player">—</span>
+        <span class="player-turn__sep">→</span>
+        <span class="player-turn__partner-label">партнёр:</span>
+        <span class="player-turn__partner" id="partner-player">—</span>
+      </div>
 
       <div class="stage">
         <article class="card" id="card" data-lvl="I" aria-live="polite">
