@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#1a0509" />
+  <title>Verità o Sfida — una notte a due</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Italiana&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="grain"></div>
+  <div class="vignette"></div>
+  <div class="embers" id="embers" aria-hidden="true"></div>
+
+  <main id="app">
+    <!-- ────── ИНТРО ────── -->
+    <section class="view view--intro" id="view-intro">
+      <div class="frame">
+        <div class="ornament ornament--top">
+          <svg viewBox="0 0 320 24" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+            <line x1="20" y1="12" x2="140" y2="12" stroke="currentColor" stroke-width="0.8"/>
+            <line x1="180" y1="12" x2="300" y2="12" stroke="currentColor" stroke-width="0.8"/>
+            <circle cx="160" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="0.8"/>
+            <circle cx="160" cy="12" r="6" fill="none" stroke="currentColor" stroke-width="0.4"/>
+            <path d="M148 12 L160 4 L172 12 L160 20 Z" fill="none" stroke="currentColor" stroke-width="0.6"/>
+          </svg>
+        </div>
+
+        <header class="intro-head">
+          <p class="overline" data-reveal="1">— una notte a due —</p>
+          <h1 class="title" data-reveal="2">
+            <span class="title__line">Verità</span>
+            <span class="title__amp">o</span>
+            <span class="title__line title__line--alt">Sfida</span>
+          </h1>
+          <p class="subtitle" data-reveal="3"><em>Правда или Действие</em></p>
+          <p class="caption" data-reveal="4">Игра на двоих. Выберите уровень — и вытяните карту.</p>
+        </header>
+
+        <div class="levels" data-reveal="5">
+          <button class="level" data-level="I" aria-label="Уровень I, 16+">
+            <span class="level__numeral">I</span>
+            <span class="level__age">16+</span>
+            <span class="level__label">Innamoramento</span>
+            <span class="level__sub">Знакомство и нежность</span>
+            <span class="level__corner level__corner--tl"></span>
+            <span class="level__corner level__corner--tr"></span>
+            <span class="level__corner level__corner--bl"></span>
+            <span class="level__corner level__corner--br"></span>
+          </button>
+          <button class="level level--mid" data-level="II" aria-label="Уровень II, 18+">
+            <span class="level__numeral">II</span>
+            <span class="level__age">18+</span>
+            <span class="level__label">Desiderio</span>
+            <span class="level__sub">Желание и доверие</span>
+            <span class="level__corner level__corner--tl"></span>
+            <span class="level__corner level__corner--tr"></span>
+            <span class="level__corner level__corner--bl"></span>
+            <span class="level__corner level__corner--br"></span>
+          </button>
+          <button class="level level--hot" data-level="III" aria-label="Уровень III, 21+">
+            <span class="level__numeral">III</span>
+            <span class="level__age">21+</span>
+            <span class="level__label">Passione</span>
+            <span class="level__sub">Страсть и откровение</span>
+            <span class="level__corner level__corner--tl"></span>
+            <span class="level__corner level__corner--tr"></span>
+            <span class="level__corner level__corner--bl"></span>
+            <span class="level__corner level__corner--br"></span>
+          </button>
+        </div>
+
+        <div class="ornament ornament--bot" data-reveal="6">
+          <svg viewBox="0 0 320 24" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+            <line x1="20" y1="12" x2="140" y2="12" stroke="currentColor" stroke-width="0.8"/>
+            <line x1="180" y1="12" x2="300" y2="12" stroke="currentColor" stroke-width="0.8"/>
+            <circle cx="160" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="0.8"/>
+            <circle cx="160" cy="12" r="6" fill="none" stroke="currentColor" stroke-width="0.4"/>
+            <path d="M148 12 L160 4 L172 12 L160 20 Z" fill="none" stroke="currentColor" stroke-width="0.6"/>
+          </svg>
+        </div>
+
+        <footer class="foot" data-reveal="7">
+          <span>Palermo · Kyiv</span>
+          <span class="foot__dot">·</span>
+          <span>2026</span>
+        </footer>
+      </div>
+    </section>
+
+    <!-- ────── ИГРА ────── -->
+    <section class="view view--play" id="view-play" hidden>
+      <header class="play-head">
+        <button class="iconbtn" id="btn-back" aria-label="Назад к уровням">
+          <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+            <path d="M15 4 L7 12 L15 20" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <div class="play-head__center">
+          <span class="play-head__numeral" id="level-numeral">II</span>
+          <span class="play-head__label" id="level-label">Desiderio</span>
+        </div>
+        <div class="play-head__counter">
+          <span id="counter-now">I</span>
+          <span class="play-head__counter-sep">/</span>
+          <span id="counter-tot">XX</span>
+        </div>
+      </header>
+
+      <nav class="modes" role="tablist" aria-label="Режим">
+        <button class="mode is-active" data-mode="truth" role="tab" aria-selected="true">
+          <span class="mode__ru">Правда</span>
+          <span class="mode__it">Verità</span>
+        </button>
+        <button class="mode" data-mode="mixed" role="tab" aria-selected="false">
+          <span class="mode__ru">Микс</span>
+          <span class="mode__it">Misto</span>
+        </button>
+        <button class="mode" data-mode="dare" role="tab" aria-selected="false">
+          <span class="mode__ru">Действие</span>
+          <span class="mode__it">Sfida</span>
+        </button>
+      </nav>
+
+      <div class="stage">
+        <article class="card" id="card" aria-live="polite">
+          <div class="card__inner" id="card-inner">
+            <span class="card__corner card__corner--tl"></span>
+            <span class="card__corner card__corner--tr"></span>
+            <span class="card__corner card__corner--bl"></span>
+            <span class="card__corner card__corner--br"></span>
+
+            <div class="card__head">
+              <span class="card__no" id="card-no">Carta I</span>
+              <span class="card__type" id="card-type">— Verità —</span>
+            </div>
+
+            <p class="card__text" id="card-text">Нажмите «Вытянуть карту», чтобы начать.</p>
+
+            <div class="card__seal" aria-hidden="true">
+              <svg viewBox="0 0 80 80" width="64" height="64">
+                <circle cx="40" cy="40" r="32" fill="none" stroke="currentColor" stroke-width="0.6" opacity="0.5"/>
+                <circle cx="40" cy="40" r="28" fill="none" stroke="currentColor" stroke-width="0.4" opacity="0.4"/>
+                <path d="M40 18 L44 36 L62 40 L44 44 L40 62 L36 44 L18 40 L36 36 Z" fill="currentColor" opacity="0.7"/>
+              </svg>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <div class="actions">
+        <button class="btn btn--ghost" id="btn-skip">
+          <span>Пропустить</span>
+        </button>
+        <button class="btn btn--primary" id="btn-draw">
+          <span>Вытянуть</span>
+          <span class="btn__hint">↻</span>
+        </button>
+      </div>
+
+      <p class="hint" id="hint">Подсказка: можно играть по очереди — карта на двоих.</p>
+    </section>
+
+    <!-- ────── КОНЕЦ КОЛОДЫ ────── -->
+    <section class="view view--end" id="view-end" hidden>
+      <div class="frame">
+        <div class="ornament ornament--top">
+          <svg viewBox="0 0 320 24" aria-hidden="true">
+            <line x1="20" y1="12" x2="140" y2="12" stroke="currentColor" stroke-width="0.8"/>
+            <line x1="180" y1="12" x2="300" y2="12" stroke="currentColor" stroke-width="0.8"/>
+            <path d="M148 12 L160 4 L172 12 L160 20 Z" fill="none" stroke="currentColor" stroke-width="0.6"/>
+          </svg>
+        </div>
+        <h2 class="end-title">Колода вытянута до конца.</h2>
+        <p class="end-sub">Вы прошли все карты этого уровня. <br/>Сделайте паузу — или начните заново.</p>
+        <div class="end-actions">
+          <button class="btn btn--primary" id="btn-restart">Начать заново</button>
+          <button class="btn btn--ghost" id="btn-change-level">Другой уровень</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
