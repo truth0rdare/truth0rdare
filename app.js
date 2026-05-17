@@ -8,15 +8,23 @@
   const STATE = {
     level: null,
     mode:  'truth',
-    deck:  [],
     drawn: [],
     current: null,
     players: ['Игрок 1', 'Игрок 2'],
     currentPlayerIdx: 0,
     scores: {},
+    seen: {}, // { playerName: Set<text> } — что игрок уже видел
   };
 
   const STORE_KEY = 'tod_players_v1';
+
+  const $  = (sel) => document.querySelector(sel);
+  const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+
+  const TYPE_LABEL = {
+    truth: 'Правда',
+    dare:  'Действие',
+  };
 
   // Сколько очков карты даёт игроку в каждую категорию (по уровню × типу)
   const SCORING = {
@@ -25,7 +33,7 @@
     III: { truth: { open: 3, lewd: 3, romance: 1 },    dare: { brave: 3, lewd: 3, romance: 2 } },
   };
 
-  // Категории для инфографики (порядок = порядок отображения)
+  // Категории для инфографики
   const CATEGORIES = [
     { key: 'lewd',    label: 'Развратность',  sub: 'кто не стесняется тела',  cls: 'coral', icon: 'lips',    titles: ['Король разврата', 'Дикая натура', 'Без комплексов'] },
     { key: 'brave',   label: 'Смелость',      sub: 'кто шёл на действия',     cls: 'sun',   icon: 'flame',   titles: ['Самый смелый', 'Без тормозов', 'Берёт всё'] },
@@ -39,14 +47,6 @@
     speech: `<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><path d="M6 8 L 26 8 C 28 8, 29 9, 29 11 L 29 19 C 29 21, 28 22, 26 22 L 14 22 L 8 28 L 8 22 L 6 22 C 4 22, 3 21, 3 19 L 3 11 C 3 9, 4 8, 6 8 Z" fill="#5FBA94" stroke="#2D1B3D" stroke-width="2" stroke-linejoin="round"/><circle cx="11" cy="15" r="1.6" fill="#2D1B3D"/><circle cx="16" cy="15" r="1.6" fill="#2D1B3D"/><circle cx="21" cy="15" r="1.6" fill="#2D1B3D"/></svg>`,
     heart:  `<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><path d="M16 27 C 16 27, 4 19, 4 11 C 4 7, 8 5, 11 7 C 13 8, 15 11, 16 11 C 17 11, 19 8, 21 7 C 24 5, 28 7, 28 11 C 28 19, 16 27, 16 27 Z" fill="#FFB0B6" stroke="#2D1B3D" stroke-width="2" stroke-linejoin="round"/></svg>`,
     crown:  `<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><path d="M4 22 L 6 9 L 12 15 L 16 6 L 20 15 L 26 9 L 28 22 Z" fill="#FFD66B" stroke="#2D1B3D" stroke-width="2" stroke-linejoin="round"/><rect x="4" y="22" width="24" height="4" rx="1" fill="#FFD66B" stroke="#2D1B3D" stroke-width="2"/><circle cx="6" cy="9" r="1.5" fill="#EE7783" stroke="#2D1B3D" stroke-width="1"/><circle cx="16" cy="6" r="1.5" fill="#EE7783" stroke="#2D1B3D" stroke-width="1"/><circle cx="26" cy="9" r="1.5" fill="#EE7783" stroke="#2D1B3D" stroke-width="1"/></svg>`,
-  };
-
-  const $  = (sel) => document.querySelector(sel);
-  const $$ = (sel) => Array.from(document.querySelectorAll(sel));
-
-  const TYPE_LABEL = {
-    truth: 'Правда',
-    dare:  'Действие',
   };
 
   /* ─── persist ─── */
@@ -65,25 +65,48 @@
     try { localStorage.setItem(STORE_KEY, JSON.stringify(players)); } catch {}
   };
 
-  /* ─── колода ─── */
+  /* ─── колода: общий пул + per-player «уже видел» ─── */
 
-  const shuffle = (arr) => {
-    const a = arr.slice();
-    for (let i = a.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [a[i], a[j]] = [a[j], a[i]];
-    }
-    return a;
-  };
-
-  const buildDeck = () => {
+  // полный пул карт для текущего уровня + режима
+  const buildPool = () => {
     const set = DATA[STATE.level];
     if (!set) return [];
     const truths = set.truth.map((t) => ({ type: 'truth', text: t }));
-    const dares  = set.dare .map((t) => ({ type: 'dare',  text: t }));
-    if (STATE.mode === 'truth') return shuffle(truths);
-    if (STATE.mode === 'dare')  return shuffle(dares);
-    return shuffle([...truths, ...dares]);
+    const dares  = set.dare.map((t)  => ({ type: 'dare',  text: t }));
+    if (STATE.mode === 'truth') return truths;
+    if (STATE.mode === 'dare')  return dares;
+    return [...truths, ...dares];
+  };
+
+  // вытащить новую карту для ТЕКУЩЕГО игрока (не виденную им).
+  // если у текущего ничего не осталось — пытаемся следующих, пока кто-то не найдёт.
+  const pickCardForCurrentPlayer = () => {
+    const pool = buildPool();
+    if (!pool.length) return null;
+    let attempts = 0;
+    while (attempts < STATE.players.length) {
+      const cur = STATE.players[STATE.currentPlayerIdx];
+      const seen = STATE.seen[cur] || new Set();
+      const available = pool.filter((c) => !seen.has(c.text));
+      if (available.length > 0) {
+        const card = available[Math.floor(Math.random() * available.length)];
+        seen.add(card.text);
+        STATE.seen[cur] = seen;
+        return card;
+      }
+      STATE.currentPlayerIdx = (STATE.currentPlayerIdx + 1) % STATE.players.length;
+      attempts++;
+    }
+    return null;
+  };
+
+  // сколько ещё карт «висит» по всем игрокам (для счётчика)
+  const totalRemaining = () => {
+    const pool = buildPool();
+    return STATE.players.reduce(
+      (sum, p) => sum + (pool.length - (STATE.seen[p]?.size || 0)),
+      0
+    );
   };
 
   /* ─── views ─── */
@@ -109,8 +132,10 @@
     $('#level-name').textContent = set.label;
     $('#level-age').textContent  = set.age;
     $('#level-chip').dataset.lvl = STATE.level;
-    $('#counter-now').textContent = STATE.drawn.length;
-    $('#counter-tot').textContent = STATE.drawn.length + STATE.deck.length;
+    const drawn = STATE.drawn.length;
+    const remaining = totalRemaining();
+    $('#counter-now').textContent = drawn;
+    $('#counter-tot').textContent = drawn + remaining;
   };
 
   const renderPlayerTurn = () => {
@@ -127,6 +152,29 @@
     }
   };
 
+  const renderCard = (card) => {
+    const cardEl = $('#card');
+    cardEl.dataset.lvl = STATE.level;
+
+    if (!card) {
+      $('#card-no').textContent   = '—';
+      $('#card-type').textContent = '—';
+      $('#card-text').textContent = 'Колода завершена.';
+      return;
+    }
+
+    cardEl.classList.remove('is-flipping');
+    void cardEl.offsetWidth;
+    cardEl.classList.add('is-flipping');
+
+    setTimeout(() => {
+      $('#card-no').textContent    = '№ ' + STATE.drawn.length;
+      $('#card-type').textContent  = TYPE_LABEL[card.type] || '—';
+      $('#card-type').dataset.type = card.type;
+      $('#card-text').textContent  = card.text;
+    }, 320);
+  };
+
   /* ─── скоринг ─── */
 
   const initScores = () => {
@@ -134,6 +182,11 @@
     STATE.players.forEach((name) => {
       STATE.scores[name] = { lewd:0, brave:0, open:0, romance:0, done:0, skipped:0 };
     });
+  };
+
+  const initSeen = () => {
+    STATE.seen = {};
+    STATE.players.forEach((name) => { STATE.seen[name] = new Set(); });
   };
 
   const scoreCard = (card, playerName) => {
@@ -153,24 +206,41 @@
     '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
   })[c]);
 
+  /* ─── инфографика ─── */
+
+  const setEndMode = (mode) => {
+    if (mode === 'milestone') {
+      $('#end-badge').textContent = 'промежуточный счёт';
+      $('#end-title-1').textContent = 'А что';
+      $('#end-title-or').textContent = 'у вас';
+      $('#end-title-2').textContent = 'выходит?';
+      $('#end-actions-final').hidden = true;
+      $('#end-actions-milestone').hidden = false;
+    } else {
+      $('#end-badge').textContent = 'а вот и итоги!';
+      $('#end-title-1').textContent = 'Кто';
+      $('#end-title-or').textContent = 'из вас';
+      $('#end-title-2').textContent = 'король?';
+      $('#end-actions-final').hidden = false;
+      $('#end-actions-milestone').hidden = true;
+    }
+  };
+
   const renderStats = () => {
     const host = $('#stats-host');
     host.innerHTML = '';
 
-    // подзаголовок: общий итог
     const totalDone = STATE.players.reduce((s, p) => s + (STATE.scores[p]?.done || 0), 0);
     const totalSkip = STATE.players.reduce((s, p) => s + (STATE.scores[p]?.skipped || 0), 0);
     $('#end-tagline').textContent = `Сыграно ${totalDone} карт · пропущено ${totalSkip}`;
 
-    // карточки по категориям
     CATEGORIES.forEach((cat) => {
       const ranked = STATE.players
         .map((p) => ({ name: p, score: STATE.scores[p]?.[cat.key] || 0 }))
         .sort((a, b) => b.score - a.score);
       const max = Math.max(1, ranked[0]?.score || 0);
       const leader = ranked[0];
-      const titleIdx = Math.floor(Math.random() * cat.titles.length);
-      const title = cat.titles[titleIdx];
+      const title = cat.titles[Math.floor(Math.random() * cat.titles.length)];
 
       const block = document.createElement('div');
       block.className = `stat-card stat-card--${cat.cls}`;
@@ -199,7 +269,6 @@
           `).join('')}
         </div>
       `;
-      // crown в leader chip слишком большой; ограничим
       block.querySelectorAll('.stat-card__leader svg').forEach((sv) => {
         sv.setAttribute('width', '16');
         sv.setAttribute('height', '16');
@@ -235,27 +304,16 @@
     host.appendChild(totalsBlock);
   };
 
-  const renderCard = (card) => {
-    const cardEl = $('#card');
-    cardEl.dataset.lvl = STATE.level;
+  const showMilestone = () => {
+    renderStats();
+    setEndMode('milestone');
+    setView('end');
+  };
 
-    if (!card) {
-      $('#card-no').textContent   = '—';
-      $('#card-type').textContent = '—';
-      $('#card-text').textContent = 'Колода завершена.';
-      return;
-    }
-
-    cardEl.classList.remove('is-flipping');
-    void cardEl.offsetWidth;
-    cardEl.classList.add('is-flipping');
-
-    setTimeout(() => {
-      $('#card-no').textContent    = '№ ' + STATE.drawn.length;
-      $('#card-type').textContent  = TYPE_LABEL[card.type] || '—';
-      $('#card-type').dataset.type = card.type;
-      $('#card-text').textContent  = card.text;
-    }, 320);
+  const showFinal = () => {
+    renderStats();
+    setEndMode('final');
+    setView('end');
   };
 
   /* ─── игровая логика ─── */
@@ -264,41 +322,43 @@
     STATE.level   = level;
     STATE.drawn   = [];
     STATE.current = null;
-    STATE.deck    = buildDeck();
     STATE.currentPlayerIdx = 0;
     initScores();
+    initSeen();
     setView('play');
     renderHead();
     renderPlayerTurn();
     drawNext({ first: true });
   };
 
-  const finishGame = () => {
-    // зачёт последней карты не делаем — пользователь сам решил закончить
-    renderStats();
-    setView('end');
-  };
-
   const drawNext = (opts = {}) => {
-    // зачёт предыдущей карты (если была)
-    if (STATE.current && !opts.first) {
+    // 1) зачёт предыдущей карты (если есть)
+    if (!opts.fromMilestone && !opts.noScore && STATE.current && !opts.first) {
       const cur = STATE.players[STATE.currentPlayerIdx];
       if (opts.completed) scoreCard(STATE.current, cur);
       else if (opts.skipped) recordSkip(cur);
     }
 
-    // если карт больше нет — выходим в итоги
-    if (STATE.deck.length === 0) {
-      renderStats();
-      setView('end');
+    // 2) проверка milestone: каждые (players × 5) пройденных карт
+    const drawn = STATE.drawn.length;
+    const interval = STATE.players.length * 5;
+    if (!opts.fromMilestone && drawn > 0 && drawn % interval === 0) {
+      showMilestone();
       return;
     }
 
-    // ротация игроков: сдвигаем на каждом draw, кроме самого первого
-    if (!opts.first && STATE.drawn.length > 0) {
+    // 3) ротация: следующий игрок (кроме самой первой карты и переключения режима)
+    if (!opts.first && !opts.noAdvance && STATE.drawn.length > 0) {
       STATE.currentPlayerIdx = (STATE.currentPlayerIdx + 1) % STATE.players.length;
     }
-    const card = STATE.deck.shift();
+
+    // 4) пик карты для текущего (с пропуском «выдохшихся»)
+    const card = pickCardForCurrentPlayer();
+    if (!card) {
+      showFinal();
+      return;
+    }
+
     STATE.current = card;
     STATE.drawn.push(card);
     renderCard(card);
@@ -309,20 +369,23 @@
   const switchMode = (mode) => {
     if (mode === STATE.mode) return;
     STATE.mode = mode;
-    const used = new Set(STATE.drawn.map((c) => c.text));
-    STATE.deck = buildDeck().filter((c) => !used.has(c.text));
     $$('.mode').forEach((b) => {
       const active = b.dataset.mode === mode;
       b.classList.toggle('is-active', active);
       b.setAttribute('aria-selected', active ? 'true' : 'false');
     });
     renderHead();
-    drawNext();
+    // меняем карту без зачёта и без сдвига игрока
+    drawNext({ noAdvance: true, noScore: true });
   };
 
   const restart = () => {
     if (!STATE.level) { setView('intro'); return; }
     startLevel(STATE.level);
+  };
+
+  const finishGame = () => {
+    showFinal();
   };
 
   /* ─── setup ─── */
@@ -377,7 +440,7 @@
       p.addEventListener('click', () => {
         const cnt = +p.dataset.count;
         setActiveCount(cnt);
-        const cur = collectNames(); // сохраняем то, что уже введено
+        const cur = collectNames();
         renderNameInputs(cnt, cur);
       });
     });
@@ -422,10 +485,18 @@
       b.addEventListener('click', () => switchMode(b.dataset.mode));
     });
 
+    // на view-end
     $('#btn-restart').addEventListener('click', () => restart());
     $('#btn-change-level').addEventListener('click', () => setView('intro'));
+    $('#btn-continue-game').addEventListener('click', () => {
+      setView('play');
+      drawNext({ fromMilestone: true });
+    });
+    $('#btn-end-now').addEventListener('click', () => {
+      setEndMode('final');
+    });
 
-    // клик по карте = «Сделал(а)» (засчитать и дальше)
+    // клик по карте = «сделал(а)» и дальше
     $('#card').addEventListener('click', () => {
       if (STATE.drawn.length > 0) drawNext({ completed: true });
     });

@@ -218,21 +218,21 @@
       </div>
     </section>
 
-    <!-- ─── ИТОГИ ─── -->
+    <!-- ─── ИТОГИ (полные и промежуточные) ─── -->
     <section class="view view--end" id="view-end" hidden>
       <header class="hero">
-        <span class="hero__badge">а вот и итоги!</span>
+        <span class="hero__badge" id="end-badge">а вот и итоги!</span>
         <h1 class="title">
-          <span class="title__big">Кто</span>
-          <span class="title__or">из вас</span>
-          <span class="title__big title__big--alt">король?</span>
+          <span class="title__big" id="end-title-1">Кто</span>
+          <span class="title__or" id="end-title-or">из вас</span>
+          <span class="title__big title__big--alt" id="end-title-2">король?</span>
         </h1>
         <p class="tagline" id="end-tagline">—</p>
       </header>
 
       <div class="stats" id="stats-host"></div>
 
-      <div class="end-actions">
+      <div class="end-actions" id="end-actions-final">
         <button class="btn btn--primary" id="btn-restart">
           Сыграть ещё
           <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
@@ -241,6 +241,16 @@
           </svg>
         </button>
         <button class="btn btn--ghost" id="btn-change-level">Другой уровень</button>
+      </div>
+
+      <div class="end-actions" id="end-actions-milestone" hidden>
+        <button class="btn btn--primary" id="btn-continue-game">
+          Продолжить игру
+          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+            <path d="M5 12 L19 12 M13 6 L19 12 L13 18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <button class="btn btn--ghost" id="btn-end-now">Закончить</button>
       </div>
     </section>
   </main>
