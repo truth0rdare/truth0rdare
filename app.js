@@ -13,9 +13,33 @@
     current: null,
     players: ['Игрок 1', 'Игрок 2'],
     currentPlayerIdx: 0,
+    scores: {},
   };
 
   const STORE_KEY = 'tod_players_v1';
+
+  // Сколько очков карты даёт игроку в каждую категорию (по уровню × типу)
+  const SCORING = {
+    I:   { truth: { open: 1 },                         dare: { brave: 1 } },
+    II:  { truth: { open: 2, romance: 1, lewd: 1 },    dare: { brave: 2, romance: 2, lewd: 1 } },
+    III: { truth: { open: 3, lewd: 3, romance: 1 },    dare: { brave: 3, lewd: 3, romance: 2 } },
+  };
+
+  // Категории для инфографики (порядок = порядок отображения)
+  const CATEGORIES = [
+    { key: 'lewd',    label: 'Развратность',  sub: 'кто не стесняется тела',  cls: 'coral', icon: 'lips',    titles: ['Король разврата', 'Дикая натура', 'Без комплексов'] },
+    { key: 'brave',   label: 'Смелость',      sub: 'кто шёл на действия',     cls: 'sun',   icon: 'flame',   titles: ['Самый смелый', 'Без тормозов', 'Берёт всё'] },
+    { key: 'open',    label: 'Откровенность', sub: 'кто отвечал правдой',     cls: 'mint',  icon: 'speech',  titles: ['Душа нараспашку', 'Самый честный', 'Без секретов'] },
+    { key: 'romance', label: 'Романтика',     sub: 'кто на чувствах',         cls: 'peach', icon: 'heart',   titles: ['Главный романтик', 'Сердцеед(ка)', 'Тёплая душа'] },
+  ];
+
+  const ICON_SVG = {
+    lips:   `<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><path d="M16 12 C 12 7, 5 9, 5 14 C 5 18, 11 23, 16 23 C 21 23, 27 18, 27 14 C 27 9, 20 7, 16 12 Z" fill="#EE7783" stroke="#2D1B3D" stroke-width="2" stroke-linejoin="round"/><path d="M5 14 C 9 16, 23 16, 27 14" stroke="#2D1B3D" stroke-width="1.5" fill="none"/></svg>`,
+    flame:  `<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><path d="M16 4 C 19 9, 23 11, 23 17 C 23 23, 19 28, 16 28 C 13 28, 9 23, 9 17 C 9 13, 14 12, 16 4 Z" fill="#F5BC2E" stroke="#2D1B3D" stroke-width="2" stroke-linejoin="round"/><path d="M16 16 C 18 19, 19 22, 19 24 C 19 26, 18 27, 16 27 C 14 27, 13 25, 14 22 C 14 20, 15 18, 16 16 Z" fill="#FFE5A0"/></svg>`,
+    speech: `<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><path d="M6 8 L 26 8 C 28 8, 29 9, 29 11 L 29 19 C 29 21, 28 22, 26 22 L 14 22 L 8 28 L 8 22 L 6 22 C 4 22, 3 21, 3 19 L 3 11 C 3 9, 4 8, 6 8 Z" fill="#5FBA94" stroke="#2D1B3D" stroke-width="2" stroke-linejoin="round"/><circle cx="11" cy="15" r="1.6" fill="#2D1B3D"/><circle cx="16" cy="15" r="1.6" fill="#2D1B3D"/><circle cx="21" cy="15" r="1.6" fill="#2D1B3D"/></svg>`,
+    heart:  `<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><path d="M16 27 C 16 27, 4 19, 4 11 C 4 7, 8 5, 11 7 C 13 8, 15 11, 16 11 C 17 11, 19 8, 21 7 C 24 5, 28 7, 28 11 C 28 19, 16 27, 16 27 Z" fill="#FFB0B6" stroke="#2D1B3D" stroke-width="2" stroke-linejoin="round"/></svg>`,
+    crown:  `<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><path d="M4 22 L 6 9 L 12 15 L 16 6 L 20 15 L 26 9 L 28 22 Z" fill="#FFD66B" stroke="#2D1B3D" stroke-width="2" stroke-linejoin="round"/><rect x="4" y="22" width="24" height="4" rx="1" fill="#FFD66B" stroke="#2D1B3D" stroke-width="2"/><circle cx="6" cy="9" r="1.5" fill="#EE7783" stroke="#2D1B3D" stroke-width="1"/><circle cx="16" cy="6" r="1.5" fill="#EE7783" stroke="#2D1B3D" stroke-width="1"/><circle cx="26" cy="9" r="1.5" fill="#EE7783" stroke="#2D1B3D" stroke-width="1"/></svg>`,
+  };
 
   const $  = (sel) => document.querySelector(sel);
   const $$ = (sel) => Array.from(document.querySelectorAll(sel));
@@ -103,6 +127,114 @@
     }
   };
 
+  /* ─── скоринг ─── */
+
+  const initScores = () => {
+    STATE.scores = {};
+    STATE.players.forEach((name) => {
+      STATE.scores[name] = { lewd:0, brave:0, open:0, romance:0, done:0, skipped:0 };
+    });
+  };
+
+  const scoreCard = (card, playerName) => {
+    const rule = SCORING[STATE.level] && SCORING[STATE.level][card.type];
+    const p = STATE.scores[playerName];
+    if (!rule || !p) return;
+    for (const k in rule) p[k] = (p[k] || 0) + rule[k];
+    p.done += 1;
+  };
+
+  const recordSkip = (playerName) => {
+    const p = STATE.scores[playerName];
+    if (p) p.skipped += 1;
+  };
+
+  const escapeHtml = (s) => String(s).replace(/[&<>"']/g, (c) => ({
+    '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
+  })[c]);
+
+  const renderStats = () => {
+    const host = $('#stats-host');
+    host.innerHTML = '';
+
+    // подзаголовок: общий итог
+    const totalDone = STATE.players.reduce((s, p) => s + (STATE.scores[p]?.done || 0), 0);
+    const totalSkip = STATE.players.reduce((s, p) => s + (STATE.scores[p]?.skipped || 0), 0);
+    $('#end-tagline').textContent = `Сыграно ${totalDone} карт · пропущено ${totalSkip}`;
+
+    // карточки по категориям
+    CATEGORIES.forEach((cat) => {
+      const ranked = STATE.players
+        .map((p) => ({ name: p, score: STATE.scores[p]?.[cat.key] || 0 }))
+        .sort((a, b) => b.score - a.score);
+      const max = Math.max(1, ranked[0]?.score || 0);
+      const leader = ranked[0];
+      const titleIdx = Math.floor(Math.random() * cat.titles.length);
+      const title = cat.titles[titleIdx];
+
+      const block = document.createElement('div');
+      block.className = `stat-card stat-card--${cat.cls}`;
+
+      const leaderChip = leader && leader.score > 0
+        ? `<span class="stat-card__leader">${ICON_SVG.crown} ${escapeHtml(title)}: ${escapeHtml(leader.name)}</span>`
+        : '';
+
+      block.innerHTML = `
+        <div class="stat-card__head">
+          <span class="stat-card__icon">${ICON_SVG[cat.icon]}</span>
+          <div class="stat-card__title">
+            <div class="stat-card__label">${escapeHtml(cat.label)}</div>
+            <div class="stat-card__sub">${escapeHtml(cat.sub)}</div>
+          </div>
+          ${leaderChip}
+        </div>
+        <div class="stat-card__list">
+          ${ranked.map((p, i) => `
+            <div class="rank-row ${i === 0 && p.score > 0 ? 'is-top' : ''}">
+              <span class="rank-row__crown">${i === 0 && p.score > 0 ? ICON_SVG.crown : ''}</span>
+              <span class="rank-row__name">${escapeHtml(p.name)}</span>
+              <div class="rank-row__bar"><div class="rank-row__fill" style="--target: ${(p.score / max * 100).toFixed(1)}%"></div></div>
+              <span class="rank-row__score">${p.score}</span>
+            </div>
+          `).join('')}
+        </div>
+      `;
+      // crown в leader chip слишком большой; ограничим
+      block.querySelectorAll('.stat-card__leader svg').forEach((sv) => {
+        sv.setAttribute('width', '16');
+        sv.setAttribute('height', '16');
+      });
+      host.appendChild(block);
+    });
+
+    // блок активности
+    const totalsBlock = document.createElement('div');
+    totalsBlock.className = 'stat-card stat-card--totals';
+    totalsBlock.innerHTML = `
+      <div class="stat-card__head">
+        <div class="stat-card__title">
+          <div class="stat-card__label">Активность</div>
+          <div class="stat-card__sub">сделано / пропущено</div>
+        </div>
+      </div>
+      <div class="totals-grid">
+        ${STATE.players.map((p) => {
+          const s = STATE.scores[p] || { done:0, skipped:0 };
+          return `
+            <div class="total-cell">
+              <div class="total-cell__name">${escapeHtml(p)}</div>
+              <div class="total-cell__nums">
+                <span class="total-cell__done">✓ ${s.done}</span>
+                <span class="total-cell__skipped">✗ ${s.skipped}</span>
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+    host.appendChild(totalsBlock);
+  };
+
   const renderCard = (card) => {
     const cardEl = $('#card');
     cardEl.dataset.lvl = STATE.level;
@@ -134,17 +266,34 @@
     STATE.current = null;
     STATE.deck    = buildDeck();
     STATE.currentPlayerIdx = 0;
+    initScores();
     setView('play');
     renderHead();
     renderPlayerTurn();
     drawNext({ first: true });
   };
 
+  const finishGame = () => {
+    // зачёт последней карты не делаем — пользователь сам решил закончить
+    renderStats();
+    setView('end');
+  };
+
   const drawNext = (opts = {}) => {
+    // зачёт предыдущей карты (если была)
+    if (STATE.current && !opts.first) {
+      const cur = STATE.players[STATE.currentPlayerIdx];
+      if (opts.completed) scoreCard(STATE.current, cur);
+      else if (opts.skipped) recordSkip(cur);
+    }
+
+    // если карт больше нет — выходим в итоги
     if (STATE.deck.length === 0) {
+      renderStats();
       setView('end');
       return;
     }
+
     // ротация игроков: сдвигаем на каждом draw, кроме самого первого
     if (!opts.first && STATE.drawn.length > 0) {
       STATE.currentPlayerIdx = (STATE.currentPlayerIdx + 1) % STATE.players.length;
@@ -156,8 +305,6 @@
     renderHead();
     renderPlayerTurn();
   };
-
-  const skipCard = () => drawNext();
 
   const switchMode = (mode) => {
     if (mode === STATE.mode) return;
@@ -267,8 +414,9 @@
 
     // в игре
     $('#btn-back').addEventListener('click', () => setView('intro'));
-    $('#btn-draw').addEventListener('click', () => drawNext());
-    $('#btn-skip').addEventListener('click', () => skipCard());
+    $('#btn-draw').addEventListener('click', () => drawNext({ completed: true }));
+    $('#btn-skip').addEventListener('click', () => drawNext({ skipped: true }));
+    $('#btn-finish').addEventListener('click', () => finishGame());
 
     $$('.mode').forEach((b) => {
       b.addEventListener('click', () => switchMode(b.dataset.mode));
@@ -277,9 +425,9 @@
     $('#btn-restart').addEventListener('click', () => restart());
     $('#btn-change-level').addEventListener('click', () => setView('intro'));
 
-    // клик по карте = следующая
+    // клик по карте = «Сделал(а)» (засчитать и дальше)
     $('#card').addEventListener('click', () => {
-      if (STATE.drawn.length > 0) drawNext();
+      if (STATE.drawn.length > 0) drawNext({ completed: true });
     });
 
     // клавиатура
@@ -287,7 +435,10 @@
       if (!$('#view-play').hidden) {
         if (e.key === 'ArrowRight' || e.key === ' ') {
           e.preventDefault();
-          drawNext();
+          drawNext({ completed: true });
+        } else if (e.key === 'ArrowLeft') {
+          e.preventDefault();
+          drawNext({ skipped: true });
         } else if (e.key === 'Escape') {
           setView('intro');
         }

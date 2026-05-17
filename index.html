@@ -204,37 +204,43 @@
       <div class="actions">
         <button class="btn btn--ghost" id="btn-skip">Пропустить</button>
         <button class="btn btn--primary" id="btn-draw">
-          Вытянуть
+          Сделал(а)
           <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
-            <path d="M5 12 L19 12 M13 6 L19 12 L13 18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M5 13 L10 18 L20 6" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </button>
       </div>
 
-      <p class="hint">Можно играть по очереди — пробел или клик по карте → следующая</p>
+      <p class="hint">«Сделал(а)» — карта засчитана; «Пропустить» — нет. В конце увидите итоги.</p>
+
+      <div class="play-foot">
+        <button class="text-btn" id="btn-finish">Закончить и посмотреть итоги →</button>
+      </div>
     </section>
 
-    <!-- ─── ФИНАЛ ─── -->
+    <!-- ─── ИТОГИ ─── -->
     <section class="view view--end" id="view-end" hidden>
-      <div class="end-card">
-        <span class="end-emoji">
-          <svg viewBox="0 0 80 80" width="80" height="80">
-            <path d="M40 8 L46 30 L70 32 L52 46 L58 70 L40 58 L22 70 L28 46 L10 32 L34 30 Z"
-              fill="#FFD66B" stroke="#2D1B3D" stroke-width="3" stroke-linejoin="round"/>
+      <header class="hero">
+        <span class="hero__badge">а вот и итоги!</span>
+        <h1 class="title">
+          <span class="title__big">Кто</span>
+          <span class="title__or">из вас</span>
+          <span class="title__big title__big--alt">король?</span>
+        </h1>
+        <p class="tagline" id="end-tagline">—</p>
+      </header>
+
+      <div class="stats" id="stats-host"></div>
+
+      <div class="end-actions">
+        <button class="btn btn--primary" id="btn-restart">
+          Сыграть ещё
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+            <path d="M4 12 A8 8 0 1 1 12 20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+            <path d="M4 6 L4 12 L10 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
-        </span>
-        <h2 class="end-title">Карты закончились!</h2>
-        <p class="end-sub">Вы прошли всю колоду этого уровня.</p>
-        <div class="end-actions">
-          <button class="btn btn--primary" id="btn-restart">
-            Начать заново
-            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-              <path d="M4 12 A8 8 0 1 1 12 20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
-              <path d="M4 6 L4 12 L10 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </button>
-          <button class="btn btn--ghost" id="btn-change-level">Другой уровень</button>
-        </div>
+        </button>
+        <button class="btn btn--ghost" id="btn-change-level">Другой уровень</button>
       </div>
     </section>
   </main>
