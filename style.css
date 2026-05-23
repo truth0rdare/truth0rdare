@@ -1128,6 +1128,7 @@ body {
   gap: 12px;
   justify-content: center;
   flex-wrap: wrap;
+  margin-bottom: 20px;
 }
 
 /* ─── МОБИЛЬНЫЕ ─── */
