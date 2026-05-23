@@ -62,6 +62,46 @@ body {
   overflow-x: hidden;
 }
 
+/* ─── кнопка fullscreen ─── */
+
+.fs-btn {
+  position: fixed;
+  bottom: max(14px, env(safe-area-inset-bottom, 0));
+  right:  max(14px, env(safe-area-inset-right, 0));
+  z-index: 50;
+  width: 44px;
+  height: 44px;
+  background: var(--paper);
+  border: 2.5px solid var(--ink);
+  border-radius: 50%;
+  cursor: pointer;
+  color: var(--ink);
+  display: grid;
+  place-items: center;
+  box-shadow: var(--shadow-sm);
+  transition: transform .15s var(--ease-out), box-shadow .15s var(--ease-out), opacity .2s ease;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.fs-btn:hover, .fs-btn:focus-visible {
+  outline: none;
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 var(--ink);
+}
+.fs-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 var(--ink);
+}
+
+.fs-btn__icon--exit { display: none; }
+.fs-btn.is-on .fs-btn__icon--enter { display: none; }
+.fs-btn.is-on .fs-btn__icon--exit  { display: block; }
+
+/* в standalone (PWA) скрываем кнопку — браузерного UI уже нет */
+@media all and (display-mode: standalone) {
+  .fs-btn { display: none; }
+}
+
 /* ─── ФОНОВЫЕ КЛЯКСЫ ─── */
 
 .blobs {

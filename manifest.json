@@ -1,0 +1,20 @@
+{
+  "name": "Правда или Действие",
+  "short_name": "Правда/Действие",
+  "description": "Игра в правду или действие для двоих и больше.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FFF6E9",
+  "theme_color": "#FFF6E9",
+  "lang": "ru",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

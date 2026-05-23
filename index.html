@@ -5,6 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#FFF6E9" />
   <title>Правда или Действие</title>
+
+  <!-- PWA / standalone -->
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icon.svg" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Правда/Действие" />
+
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:ital,wght@0,400;0,600;0,700;0,800;1,400;1,600&display=swap" rel="stylesheet" />
@@ -38,6 +48,15 @@
       <path d="M3 17 L 14 6" stroke="#2D1B3D" stroke-width="1.2" fill="none"/>
     </svg>
   </div>
+
+  <button class="fs-btn" id="btn-fs" aria-label="На весь экран" title="На весь экран">
+    <svg class="fs-btn__icon fs-btn__icon--enter" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+      <path d="M4 10 V4 H10 M14 4 H20 V10 M20 14 V20 H14 M10 20 H4 V14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <svg class="fs-btn__icon fs-btn__icon--exit" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+      <path d="M9 3 V9 H3 M21 9 H15 V3 M15 21 V15 H21 M3 15 H9 V21" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
 
   <main id="app">
 

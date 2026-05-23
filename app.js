@@ -8,12 +8,13 @@
   const STATE = {
     level: null,
     mode:  'truth',
+    deck:  [],          // оставшиеся карты (общие на всех)
+    used:  new Set(),   // тексты карт, уже выпавших в этой игре — больше не повторяются
     drawn: [],
     current: null,
     players: ['Игрок 1', 'Игрок 2'],
     currentPlayerIdx: 0,
     scores: {},
-    seen: {}, // { playerName: Set<text> } — что игрок уже видел
   };
 
   const STORE_KEY = 'tod_players_v1';
@@ -65,7 +66,16 @@
     try { localStorage.setItem(STORE_KEY, JSON.stringify(players)); } catch {}
   };
 
-  /* ─── колода: общий пул + per-player «уже видел» ─── */
+  /* ─── колода: общая, без повторов ─── */
+
+  const shuffle = (arr) => {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  };
 
   // полный пул карт для текущего уровня + режима
   const buildPool = () => {
@@ -78,36 +88,8 @@
     return [...truths, ...dares];
   };
 
-  // вытащить новую карту для ТЕКУЩЕГО игрока (не виденную им).
-  // если у текущего ничего не осталось — пытаемся следующих, пока кто-то не найдёт.
-  const pickCardForCurrentPlayer = () => {
-    const pool = buildPool();
-    if (!pool.length) return null;
-    let attempts = 0;
-    while (attempts < STATE.players.length) {
-      const cur = STATE.players[STATE.currentPlayerIdx];
-      const seen = STATE.seen[cur] || new Set();
-      const available = pool.filter((c) => !seen.has(c.text));
-      if (available.length > 0) {
-        const card = available[Math.floor(Math.random() * available.length)];
-        seen.add(card.text);
-        STATE.seen[cur] = seen;
-        return card;
-      }
-      STATE.currentPlayerIdx = (STATE.currentPlayerIdx + 1) % STATE.players.length;
-      attempts++;
-    }
-    return null;
-  };
-
-  // сколько ещё карт «висит» по всем игрокам (для счётчика)
-  const totalRemaining = () => {
-    const pool = buildPool();
-    return STATE.players.reduce(
-      (sum, p) => sum + (pool.length - (STATE.seen[p]?.size || 0)),
-      0
-    );
-  };
+  // собрать колоду из пула, исключив уже выпавшие карты, и перемешать
+  const buildDeck = () => shuffle(buildPool().filter((c) => !STATE.used.has(c.text)));
 
   /* ─── views ─── */
 
@@ -133,9 +115,8 @@
     $('#level-age').textContent  = set.age;
     $('#level-chip').dataset.lvl = STATE.level;
     const drawn = STATE.drawn.length;
-    const remaining = totalRemaining();
     $('#counter-now').textContent = drawn;
-    $('#counter-tot').textContent = drawn + remaining;
+    $('#counter-tot').textContent = drawn + STATE.deck.length;
   };
 
   const renderPlayerTurn = () => {
@@ -182,11 +163,6 @@
     STATE.players.forEach((name) => {
       STATE.scores[name] = { lewd:0, brave:0, open:0, romance:0, done:0, skipped:0 };
     });
-  };
-
-  const initSeen = () => {
-    STATE.seen = {};
-    STATE.players.forEach((name) => { STATE.seen[name] = new Set(); });
   };
 
   const scoreCard = (card, playerName) => {
@@ -323,8 +299,9 @@
     STATE.drawn   = [];
     STATE.current = null;
     STATE.currentPlayerIdx = 0;
+    STATE.used    = new Set();
     initScores();
-    initSeen();
+    STATE.deck    = buildDeck();
     setView('play');
     renderHead();
     renderPlayerTurn();
@@ -347,18 +324,20 @@
       return;
     }
 
-    // 3) ротация: следующий игрок (кроме самой первой карты и переключения режима)
-    if (!opts.first && !opts.noAdvance && STATE.drawn.length > 0) {
-      STATE.currentPlayerIdx = (STATE.currentPlayerIdx + 1) % STATE.players.length;
-    }
-
-    // 4) пик карты для текущего (с пропуском «выдохшихся»)
-    const card = pickCardForCurrentPlayer();
-    if (!card) {
+    // 3) карты кончились — финал
+    if (STATE.deck.length === 0) {
       showFinal();
       return;
     }
 
+    // 4) ротация: следующий игрок (кроме самой первой карты и переключения режима)
+    if (!opts.first && !opts.noAdvance && STATE.drawn.length > 0) {
+      STATE.currentPlayerIdx = (STATE.currentPlayerIdx + 1) % STATE.players.length;
+    }
+
+    // 5) берём верхнюю карту из общей колоды — больше она не выпадет
+    const card = STATE.deck.shift();
+    STATE.used.add(card.text);
     STATE.current = card;
     STATE.drawn.push(card);
     renderCard(card);
@@ -374,6 +353,8 @@
       b.classList.toggle('is-active', active);
       b.setAttribute('aria-selected', active ? 'true' : 'false');
     });
+    // пересобираем колоду под новый режим, исключая уже выпавшее
+    STATE.deck = buildDeck();
     renderHead();
     // меняем карту без зачёта и без сдвига игрока
     drawNext({ noAdvance: true, noScore: true });
